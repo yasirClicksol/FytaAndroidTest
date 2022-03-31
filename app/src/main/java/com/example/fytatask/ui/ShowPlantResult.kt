@@ -31,20 +31,32 @@ class ShowPlantResult : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         val gson = Gson()
+        /*****************************
+         * Getting intent data and parsing
+         * ****************************/
         intent?.apply {
             response = getStringExtra("plantResult")
             imagePath = getStringExtra("imagePath")
             plantsList = gson.fromJson(response, PlantResponseModel::class.java)
         }
+
+        /*****************************
+         * Setting adapter
+         * ****************************/
         mAdapter = PlantResponseAdapter(plantsList , imagePath)
         rv_plant.layoutManager = LinearLayoutManager(this)
         rv_plant.adapter = mAdapter
         tv_retake.setOnClickListener {
             finish()
         }
+
+        /*****************************
+         * Setting retake card on last item
+         * ****************************/
         rv_plant.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
+
                 if (!recyclerView.canScrollVertically(1)) {
                     group_retake.visibility = View.VISIBLE
                 }
@@ -55,6 +67,9 @@ class ShowPlantResult : AppCompatActivity() {
         })
     }
 
+    /*****************************
+     * Action bar button
+     * ****************************/
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             android.R.id.home -> {

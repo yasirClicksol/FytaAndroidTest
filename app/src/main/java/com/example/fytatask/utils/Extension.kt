@@ -6,7 +6,6 @@ import android.app.Dialog
 import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
-import android.database.Cursor
 import android.graphics.*
 import android.net.ConnectivityManager
 import android.net.Uri
@@ -25,13 +24,12 @@ import android.widget.*
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.GranularRoundedCorners
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.RequestOptions
 import com.example.fytatask.R
 import com.example.fytatask.ui.ShowPlantResult
 import com.example.fytatask.utils.Constants.BASE_URL
 import com.example.fytatask.utils.Constants.GALLERY_PICTURE
-import com.example.fytatask.utils.Constants.PIC_ID
+import com.example.fytatask.utils.Constants.CAMERA_PICTURE
 import kotlinx.android.synthetic.main.activity_gallery_camera.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,7 +45,9 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.util.EntityUtils
 import java.io.*
 
-
+/*****************************
+ * Converting bitmap to image path
+ * ****************************/
 fun Context.persistImage(bitmap: Bitmap, name: String): File {
     val filesDir: File = filesDir
     val imageFile = File(filesDir, "$name.jpg")
@@ -63,40 +63,42 @@ fun Context.persistImage(bitmap: Bitmap, name: String): File {
     return imageFile
 }
 
+/*****************************
+ * Gallery open intent
+ * ****************************/
 fun openGallery(activity: Activity) {
     val intent =
-        Intent(Intent.ACTION_GET_CONTENT) //Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        Intent(Intent.ACTION_GET_CONTENT)
     intent.type = "image/*"
-//    intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-    //  intent.addCategory(Intent.CATEGORY_OPENABLE)
     activity.startActivityForResult(
         Intent.createChooser(intent, "Select Picture"),
         GALLERY_PICTURE
     )
 }
 
+/*****************************
+ * Checking internet connectivity
+ * ****************************/
 fun isOnline(activity: Activity): Boolean {
     val networkInfo =
         (activity.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager).activeNetworkInfo
     return networkInfo != null && networkInfo.isConnected
 }
 
+/*****************************
+ * Camera opening intent
+ * ****************************/
 fun openCamera(activity: Activity) {
-    /* val camIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-
-     // Start the activity with camera_intent,
-     // and request pic id
-
-     // Start the activity with camera_intent,
-     // and request pic id
-     activity.startActivityForResult(camIntent, PIC_ID)*/
     val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
     if (cameraIntent.resolveActivity(activity.packageManager) != null) activity.startActivityForResult(
         cameraIntent,
-        PIC_ID
+        CAMERA_PICTURE
     )
 }
 
+/*****************************
+ * Getting path for gallery selected picture
+ * ****************************/
 @SuppressLint("NewApi")
 fun getPath(uri: Uri, context: Context): String? {
     var uri = uri
@@ -106,31 +108,35 @@ fun getPath(uri: Uri, context: Context): String? {
     // Uri is different in versions after KITKAT (Android 4.4), we need to
     // deal with different Uris.
     if (needToCheckUri && DocumentsContract.isDocumentUri(context, uri)) {
-        if (isExternalStorageDocument(uri)) {
-            val docId = DocumentsContract.getDocumentId(uri)
-            val split = docId.split(":").toTypedArray()
-            return Environment.getExternalStorageDirectory().toString() + "/" + split[1]
-        } else if (isDownloadsDocument(uri)) {
-            val id = DocumentsContract.getDocumentId(uri)
-            if (id.startsWith("raw:")) {
-                return id.replaceFirst("raw:".toRegex(), "")
+        when {
+            isExternalStorageDocument(uri) -> {
+                val docId = DocumentsContract.getDocumentId(uri)
+                val split = docId.split(":").toTypedArray()
+                return Environment.getExternalStorageDirectory().toString() + "/" + split[1]
             }
-            uri = ContentUris.withAppendedId(
-                Uri.parse("content://downloads/public_downloads"), java.lang.Long.valueOf(id)
-            )
-        } else if (isMediaDocument(uri)) {
-            val docId = DocumentsContract.getDocumentId(uri)
-            val split = docId.split(":").toTypedArray()
-            val type = split[0]
-            when (type) {
-                "image" -> uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-                "video" -> uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-                "audio" -> uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+            isDownloadsDocument(uri) -> {
+                val id = DocumentsContract.getDocumentId(uri)
+                if (id.startsWith("raw:")) {
+                    return id.replaceFirst("raw:".toRegex(), "")
+                }
+                uri = ContentUris.withAppendedId(
+                    Uri.parse("content://downloads/public_downloads"), java.lang.Long.valueOf(id)
+                )
             }
-            selection = "_id=?"
-            selectionArgs = arrayOf(
-                split[1]
-            )
+            isMediaDocument(uri) -> {
+                val docId = DocumentsContract.getDocumentId(uri)
+                val split = docId.split(":").toTypedArray()
+                val type = split[0]
+                when (type) {
+                    "image" -> uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                    "video" -> uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+                    "audio" -> uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+                }
+                selection = "_id=?"
+                selectionArgs = arrayOf(
+                    split[1]
+                )
+            }
         }
     }
     if ("content".equals(uri.scheme, ignoreCase = true)) {
@@ -179,6 +185,9 @@ private fun isMediaDocument(uri: Uri): Boolean {
     return "com.android.providers.media.documents" == uri.authority
 }
 
+/*****************************
+ * Calling API
+ * ****************************/
 fun Activity.callApi(
     imagePath: File,
     progressBar: ProgressBar,
@@ -243,6 +252,9 @@ fun Activity.callApi(
     }
 }
 
+/*****************************
+ * Opening detail view
+ * ****************************/
 fun Context.showDialog(speName: String?, speImagePath: String?) {
     val dialog = Dialog(this, R.style.CustomDialogWithMargin)
     dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
@@ -257,12 +269,15 @@ fun Context.showDialog(speName: String?, speImagePath: String?) {
     speciesName.text = speName
     Glide.with(this)
         .load(speImagePath)
-        .apply(RequestOptions().transform(CenterCrop() , GranularRoundedCorners(0f, 0f, 32f, 32f)))
+        .apply(RequestOptions().transform(CenterCrop(), GranularRoundedCorners(0f, 0f, 32f, 32f)))
         .into(speciesImage)
     dialog.show()
 
 }
 
+/*****************************
+ * Showing retake dialog when no result found
+ * ****************************/
 fun Activity.showRetakeDialog() {
     val dialog = Dialog(this, R.style.CustomDialogWithMargin)
     dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
@@ -277,7 +292,7 @@ fun Activity.showRetakeDialog() {
         retakePhoto.setOnClickListener {
             dismiss()
         }
-        if (!isFinishing)show()
+        if (!isFinishing) show()
     }
 
 

@@ -10,7 +10,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.view.View
 import com.example.fytatask.utils.Constants.GALLERY_PICTURE
-import com.example.fytatask.utils.Constants.PIC_ID
+import com.example.fytatask.utils.Constants.CAMERA_PICTURE
 import com.nabinbhandari.android.permissions.PermissionHandler
 import com.nabinbhandari.android.permissions.Permissions
 
@@ -23,6 +23,10 @@ class GalleryCameraActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_gallery_camera)
+        /*****************************
+         * Permission and opening gallery
+         * ****************************/
+
 
         iv_gallery_picker.setOnClickListener {
             Permissions.check(
@@ -35,6 +39,11 @@ class GalleryCameraActivity : AppCompatActivity() {
                     }
                 })
         }
+
+        /*****************************
+         * Permission and opening camera
+         * ****************************/
+
 
         button_camera.setOnClickListener {
             Permissions.check(
@@ -55,9 +64,12 @@ class GalleryCameraActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
 
+            /*****************************
+             * Calling API for Gallery Image
+             * ****************************/
+
             GALLERY_PICTURE -> {
                 if (isOnline(this)) {
-
                     var imageUri = data?.data
                     if (imageUri != null) {
                         showProgressView()
@@ -65,23 +77,28 @@ class GalleryCameraActivity : AppCompatActivity() {
                         val selectedImage = BitmapFactory.decodeStream(imageStream)
                         image_preview.setImageBitmap(selectedImage)
                         val galleryImagePath = File(getPath(imageUri, this))
-                        callApi(galleryImagePath, progress_circular, tv_upload_data , image_preview)
+                        callApi(galleryImagePath, progress_circular, tv_upload_data, image_preview)
 
                     }
 
                 }
             }
 
-            PIC_ID -> {
+            /*****************************
+             * Calling API for Camera Image
+             * ****************************/
+
+            CAMERA_PICTURE -> {
                 if (isOnline(this)) {
-                    var photo = data?.extras?.get("data") as Bitmap?
+                    val photo = data?.extras?.get("data") as Bitmap?
                     // Set the image in imageview for display
                     if (photo != null) {
                         showProgressView()
                         image_preview.setImageBitmap(photo)
                         val imageName = System.currentTimeMillis()
-                        val cameraPicPath = photo.let { this.persistImage(it, imageName.toString()) }
-                        callApi(cameraPicPath, progress_circular, tv_upload_data , image_preview)
+                        val cameraPicPath =
+                            photo.let { this.persistImage(it, imageName.toString()) }
+                        callApi(cameraPicPath, progress_circular, tv_upload_data, image_preview)
                     }
                 }
 
@@ -92,6 +109,9 @@ class GalleryCameraActivity : AppCompatActivity() {
 
     }
 
+    /*****************************
+     * Showing Progress
+     * ****************************/
 
     private fun showProgressView() {
         progress_circular.visibility = View.VISIBLE

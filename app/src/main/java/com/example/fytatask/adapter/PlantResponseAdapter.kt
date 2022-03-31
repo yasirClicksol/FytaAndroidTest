@@ -39,7 +39,9 @@ class PlantResponseAdapter(private val plantsResult: PlantResponseModel? , priva
             .inflate(R.layout.li_plant_layout, parent, false)
         return MyViewHolder(itemView)
     }
-
+    /*****************************
+     * Setting data for UI
+     * ****************************/
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
         Glide.with(holder.itemView.context)
             .load(imagePath)
@@ -55,6 +57,9 @@ class PlantResponseAdapter(private val plantsResult: PlantResponseModel? , priva
 
     }
 
+    /*****************************
+     * list size of results set
+     * ****************************/
     override fun getItemCount(): Int {
 
         if (plantsResult?.results?.isNotEmpty() == true) {
