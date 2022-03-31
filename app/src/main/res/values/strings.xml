@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">FYTA Task</string>
+    <string name="gallery">Gallery</string>
+    <string name="processing">Processing</string>
+    <string name="uploading_data">Uploading Data</string>
+    <string name="photo_identification">Photo Identification</string>
+    <string name="we_didn_t_find_your_plant">We didn’t find your plant?</string>
+    <string name="retake_photo">Retake Photo</string>
+    <string name="retake_the_photo">Retake the photo or send us the picutre so that we can help you find it.</string>
+</resources>
